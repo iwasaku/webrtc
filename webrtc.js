@@ -1,3 +1,4 @@
+console.log = function () { };  // ログを出す時にはコメントアウトする
 
 // ICE server URLs
 let peerConnectionConfig = { 'iceServers': [{ "urls": "stun:stun.l.google.com:19302" }] };
@@ -34,7 +35,7 @@ function createPeerConnection() {
             // Vanilla ICE では，全てのICE candidate を含んだ SDP を相手に通知する
             // （SDP は pc.localDescription.sdp で取得できる）
             // 今回は手動でシグナリングするため textarea に SDP を表示する
-            document.getElementById('localSDP').value = pc.localDescription.sdp;
+            document.getElementById('localSDP').value = deflate(pc.localDescription.sdp);
             document.getElementById('status').value = 'Vanilla ICE ready';
         }
     };
@@ -108,7 +109,7 @@ function setupDataChannel(dc) {
 
 // 相手の SDP 通知を受ける
 function setRemoteSdp() {
-    let sdptext = document.getElementById('remoteSDP').value;
+    let sdptext = inflate(document.getElementById('remoteSDP').value, false);
 
     if (peerConnection) {
         // Peer Connection が生成済みの場合，SDP を Answer と見なす
@@ -165,3 +166,18 @@ function sendMessage() {
     return true;
 }
 
+// 圧縮関数 (要deflate.js)
+function deflate(val) {
+    val = encodeURIComponent(val); // UTF16 → UTF8
+    val = RawDeflate.deflate(val); // 圧縮
+    val = btoa(val); // base64エンコード
+    return val;
+}
+
+// 復号関数 (要inflate.js)
+function inflate(val) {
+    val = atob(val); // base64デコード
+    val = RawDeflate.inflate(val); // 復号
+    val = decodeURIComponent(val); // UTF8 → UTF16
+    return val;
+}
